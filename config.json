@@ -1,0 +1,6 @@
+
+{
+    "Token": "Your Discord Token",
+    "Guild": "The ID of the Server where you want to stay always connected",
+    "Channel": "The ID of the Channel where you want to be always connected"
+}
