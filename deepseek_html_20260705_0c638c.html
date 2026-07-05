@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Livecord · Selfbot Console</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        /* ==========================================
+           ROOT VARIABLES (Dark Theme)
+        ========================================== */
+        :root {
+            --bg-primary: #0b0e14;
+            --bg-secondary: #131821;
+            --bg-card: #1a212e;
+            --bg-card-hover: #232b3d;
+            --bg-input: #0d1117;
+            --text-primary: #e6edf5;
+            --text-secondary: #8b9bb5;
+            --text-muted: #4a5a7a;
+            --accent: #5865f2;
+            --accent-hover: #4752c4;
+            --accent-glow: rgba(88, 101, 242, 0.15);
+            --green: #23a55a;
+            --red: #da373c;
+            --orange: #f0b232;
+            --border: #2a3346;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --radius: 12px;
+            --transition: 0.25s ease;
+        }
+
+        /* ==========================================
+           RESET & BASE
+        ========================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        a { color: var(--accent); text-decoration: none; }
+        button { cursor: pointer; border: none; outline: none; font-family: inherit; }
+        input { font-family: inherit; outline: none; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+
+        /* ==========================================
+           SIDEBAR
+        ========================================== */
+        .sidebar {
+            width: 68px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            transition: width var(--transition);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .sidebar:hover { width: 220px; }
+        .sidebar .logo {
+            font-size: 26px;
+            color: var(--accent);
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            padding: 0 12px;
+        }
+        .sidebar .logo span {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: none;
+            letter-spacing: -0.3px;
+        }
+        .sidebar:hover .logo span { display: inline; }
+
+        .sidebar .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 100%;
+            padding: 0 10px;
+            flex: 1;
+        }
+        .sidebar .nav a {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .sidebar .nav a i { font-size: 18px; width: 22px; text-align: center; }
+        .sidebar .nav a span { display: none; }
+        .sidebar:hover .nav a span { display: inline; }
+        .sidebar .nav a:hover,
+        .sidebar .nav a.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .sidebar .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 12px 16px;
+            white-space: nowrap;
+            border-top: 1px solid var(--border);
+            width: 100%;
+        }
+        .sidebar .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .sidebar .status-badge span { display: none; }
+        .sidebar:hover .status-badge span { display: inline; }
+
+        /* ==========================================
+           MAIN CONTENT
+        ========================================== */
+        .main {
+            margin-left: 68px;
+            padding: 32px 40px 40px;
+            flex: 1;
+            min-height: 100vh;
+            transition: margin-left var(--transition);
+            max-width: 1400px;
+        }
+        .sidebar:hover ~ .main { margin-left: 220px; }
+
+        /* ==========================================
+           HEADER
+        ========================================== */
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .main-header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.3px;
+        }
+        .main-header h1 i { color: var(--accent); }
+        .main-header .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .main-header .status-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .main-header .status-text .dot-online {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--green);
+            background: rgba(35, 165, 90, 0.12);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--green);
+        }
+        .live-indicator .pulse {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        /* ==========================================
+           STATS
+        ========================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            border: 1px solid var(--border);
+            transition: all var(--transition);
+            animation: fadeIn 0.3s ease;
+        }
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .stat-card .label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .stat-card .value.green { color: var(--green); }
+        .stat-card .value.red { color: var(--red); }
+        .stat-card .value.orange { color: var(--orange); }
+        .stat-card .value.accent { color: var(--accent); }
+        .stat-card .sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ==========================================
+           CARDS
+        ========================================== */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            transition: all var(--transition);
+            animation: fadeIn 0.3s ease;
+        }
+        .card:hover { border-color: #2f3a52; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+        .card-header h3 i { color: var(--accent); }
+        .card-header .badge-count {
+            font-size: 12px;
+            background: var(--bg-primary);
+            padding: 2px 12px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        /* ==========================================
+           FORM
+        ========================================== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all var(--transition);
+        }
+        .form-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-group input::placeholder { color: var(--text-muted); }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0 14px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* ==========================================
+           BUTTONS
+        ========================================== */
+        .btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.2px;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: var(--accent-hover); transform: scale(1.02); }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-success:hover { background: #1a8c4a; transform: scale(1.02); }
+        .btn-danger { background: var(--red); color: #fff; }
+        .btn-danger:hover { background: #b92c31; transform: scale(1.02); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+            background: var(--bg-card-hover);
+        }
+        .btn-sm { padding: 5px 14px; font-size: 12px; }
+        .btn-block { width: 100%; justify-content: center; }
+        .flex { display: flex; gap: 12px; flex-wrap: wrap; }
+
+        /* ==========================================
+           TOKEN LIST
+        ========================================== */
+        .token-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .token-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            transition: all var(--transition);
+        }
+        .token-item:hover { background: var(--bg-card-hover); }
+        .token-item .info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .token-item .info .name {
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .token-item .info .badge {
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .badge-central { background: var(--accent); color: #fff; }
+        .badge-online { background: var(--green); color: #fff; }
+        .badge-offline { background: var(--red); color: #fff; }
+        .badge-afk { background: var(--orange); color: #0b0e14; }
+        .token-item .actions { display: flex; gap: 8px; }
+
+        /* ==========================================
+           STATUS & LOG
+        ========================================== */
+        .status-box {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            display: none;
+        }
+        .status-box.show { display: block; }
+        .status-box.success { background: rgba(35, 165, 90, 0.12); border: 1px solid var(--green); color: var(--green); }
+        .status-box.error { background: rgba(218, 55, 60, 0.12); border: 1px solid var(--red); color: var(--red); }
+        .status-box.info { background: rgba(88, 101, 242, 0.12); border: 1px solid var(--accent); color: var(--accent); }
+
+        .log-container {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 14px 16px;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            margin-top: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .log-container .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            gap: 12px;
+        }
+        .log-container .log-line .time { color: var(--text-muted); flex-shrink: 0; }
+        .log-container .log-line .msg { color: var(--text-secondary); }
+
+        /* ==========================================
+           RESPONSIVE
+        ========================================== */
+        @media (max-width: 768px) {
+            .sidebar { width: 56px; }
+            .sidebar:hover { width: 56px; }
+            .sidebar .logo span,
+            .sidebar .nav a span,
+            .sidebar .status-badge span { display: none !important; }
+            .main { margin-left: 56px; padding: 20px; }
+            .sidebar:hover ~ .main { margin-left: 56px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .main-header h1 { font-size: 18px; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .token-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .token-item .actions { width: 100%; }
+            .token-item .actions button { flex: 1; }
+            .flex { flex-direction: column; }
+            .flex button { width: 100%; }
+        }
+
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mt-10 { margin-top: 10px; }
+        .mb-10 { margin-bottom: 10px; }
+        .gap-8 { gap: 8px; }
+        .w-full { width: 100%; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="logo">
+        <i class="fas fa-headphones"></i>
+        <span>Livecord</span>
+    </div>
+    <nav class="nav">
+        <a href="#" class="active" data-page="dashboard"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+        <a href="#" data-page="accounts"><i class="fas fa-users"></i><span>Accounts</span></a>
+        <a href="#" data-page="add"><i class="fas fa-plus-circle"></i><span>Add Account</span></a>
+        <a href="#" data-page="settings"><i class="fas fa-sliders-h"></i><span>Settings</span></a>
+        <a href="#" data-page="selfbot"><i class="fas fa-terminal"></i><span>Console</span></a>
+    </nav>
+    <div class="status-badge">
+        <span class="dot"></span>
+        <span>Online</span>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+    <div class="main-header">
+        <h1><i class="fas fa-headphones"></i> <span id="pageTitle">Dashboard</span></h1>
+        <div class="header-actions">
+            <span class="status-text">
+                <span class="dot-online"></span>
+                <span id="serverStatus">Server Online</span>
+            </span>
+            <span class="live-indicator">
+                <span class="pulse"></span> LIVE
+            </span>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="label">Total Accounts</div><div class="value accent" id="statTotal">0</div><div class="sub">registered</div></div>
+            <div class="stat-card"><div class="label">Online</div><div class="value green" id="statOnline">0</div><div class="sub">active sessions</div></div>
+            <div class="stat-card"><div class="label">AFK</div><div class="value orange" id="statAfk">0</div><div class="sub">in voice channel</div></div>
+            <div class="stat-card"><div class="label">Offline</div><div class="value red" id="statOffline">0</div><div class="sub">inactive</div></div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-clock"></i> Recent Activity</h3><span class="badge-count">Live</span></div>
+            <div id="activityLog" style="color:var(--text-secondary);font-size:13px;">
+                <span class="live-indicator" style="font-size:11px;padding:2px 10px;">
+                    <span class="pulse"></span> Monitoring
+                </span>
+                <span style="margin-left:12px;">Waiting for account activity...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCOUNTS -->
+    <div id="page-accounts" class="hidden">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-users"></i> Managed Accounts</h3><span class="badge-count" id="accountCount">0</span></div>
+            <div id="tokenList" class="token-list">
+                <div style="color:var(--text-muted);text-align:center;padding:30px;font-size:14px;">
+                    <i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:10px;"></i>
+                    No accounts saved yet.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD ACCOUNT -->
+    <div id="page-add" class="hidden">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-plus-circle"></i> Add New Account</h3></div>
+            <div class="form-row">
+                <div class="form-group"><label>Account Name</label><input type="text" id="tokenName" placeholder="e.g. f.tp5" /></div>
+                <div class="form-group"><label>Token</label><input type="password" id="tokenValue" placeholder="Enter Discord token" /></div>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="tokenCentral" />
+                <label>⭐ Central Account (can send DM commands)</label>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="addToken()"><i class="fas fa-plus"></i> Add Account</button>
+            <div id="tokenStatus" class="status-box"></div>
+        </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="page-settings" class="hidden">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-sliders-h"></i> Server Configuration</h3></div>
+            <div class="form-row">
+                <div class="form-group"><label>Guild ID</label><input type="text" id="guildId" placeholder="Enter Guild ID" /></div>
+                <div class="form-group"><label>Channel ID</label><input type="text" id="channelId" placeholder="Enter Voice Channel ID" /></div>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="saveConfig()"><i class="fas fa-save"></i> Save Configuration</button>
+            <div id="configStatus" class="status-box"></div>
+        </div>
+    </div>
+
+    <!-- CONSOLE -->
+    <div id="page-selfbot" class="hidden">
+        <div class="card">
+            <div class="card-header"><h3><i class="fas fa-terminal"></i> Selfbot Console</h3><span class="badge-count" id="consoleStatus">● Idle</span></div>
+            <div class="flex">
+                <button class="btn btn-success" onclick="startSelfbot()"><i class="fas fa-play"></i> Start</button>
+                <button class="btn btn-danger" onclick="stopSelfbot()"><i class="fas fa-stop"></i> Stop</button>
+                <button class="btn btn-outline" onclick="refreshLogs()"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div id="startStatus" class="status-box"></div>
+            <div id="logContainer" class="log-container">
+                <div class="log-line"><span class="time">[--:--:--]</span><span class="msg">Awaiting console output...</span></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // ==========================================
+    // NAVIGATION
+    // ==========================================
+    const pages = {
+        dashboard: document.getElementById('page-dashboard'),
+        accounts: document.getElementById('page-accounts'),
+        add: document.getElementById('page-add'),
+        settings: document.getElementById('page-settings'),
+        selfbot: document.getElementById('page-selfbot')
+    };
+    const pageTitles = {
+        dashboard: 'Dashboard',
+        accounts: 'Accounts',
+        add: 'Add Account',
+        settings: 'Settings',
+        selfbot: 'Console'
+    };
+
+    document.querySelectorAll('.nav a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = link.dataset.page;
+            document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            Object.keys(pages).forEach(key => {
+                pages[key].classList.toggle('hidden', key !== page);
+            });
+            document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+        });
+    });
+
+    // ==========================================
+    // API HELPER
+    // ==========================================
+    async function api(method, url, body) {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(url, opts);
+        return res.json();
+    }
+
+    function showStatus(el, msg, type = 'success') {
+        el.className = `status-box show ${type}`;
+        el.innerHTML = msg;
+    }
+
+    function hideStatus(el) {
+        el.className = 'status-box';
+        el.innerHTML = '';
+    }
+
+    // ==========================================
+    // STATS
+    // ==========================================
+    async function updateStats() {
+        try {
+            const tokens = await api('GET', '/api/tokens');
+            const total = tokens.length;
+            const online = tokens.filter(t => t.isCentral).length || 0;
+            const afk = tokens.length > 0 ? 1 : 0;
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statOnline').textContent = online;
+            document.getElementById('statAfk').textContent = afk;
+            document.getElementById('statOffline').textContent = total - online - afk;
+        } catch (e) { console.error(e); }
+    }
+
+    // ==========================================
+    // TOKENS
+    // ==========================================
+    async function loadTokens() {
+        try {
+            const tokens = await api('GET', '/api/tokens');
+            const list = document.getElementById('tokenList');
+            const count = document.getElementById('accountCount');
+            if (!tokens || tokens.length === 0) {
+                list.innerHTML = `<div style="color:var(--text-muted);text-align:center;padding:30px;font-size:14px;">
+                    <i class="fas fa-inbox" style="font-size:24px;display:block;margin-bottom:10px;"></i>
+                    No accounts saved yet.
+                </div>`;
+                count.textContent = '0';
+                return;
+            }
+            count.textContent = tokens.length;
+            list.innerHTML = tokens.map(t => `
+                <div class="token-item">
+                    <div class="info">
+                        <span class="name">
+                            <i class="fas fa-user-circle" style="color:var(--accent);"></i> ${t.name}
+                            ${t.isCentral ? '<span class="badge badge-central">⭐ Central</span>' : ''}
+                            <span class="badge badge-online">● Online</span>
+                        </span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-danger btn-sm" onclick="deleteToken('${t.name}')"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            updateStats();
+        } catch (e) { console.error(e); }
+    }
+
+    // ==========================================
+    // ADD TOKEN
+    // ==========================================
+    async function addToken() {
+        const name = document.getElementById('tokenName').value.trim();
+        const token = document.getElementById('tokenValue').value.trim();
+        const isCentral = document.getElementById('tokenCentral').checked;
+        const status = document.getElementById('tokenStatus');
+
+        if (!name || !token) {
+            showStatus(status, '❌ Please enter both name and token', 'error');
+            return;
+        }
+
+        try {
+            const data = await api('POST', '/api/tokens', { name, token, isCentral });
+            if (data.success) {
+                showStatus(status, `✅ ${data.message}`, 'success');
+                document.getElementById('tokenName').value = '';
+                document.getElementById('tokenValue').value = '';
+                document.getElementById('tokenCentral').checked = false;
+                loadTokens();
+                setTimeout(() => hideStatus(status), 4000);
+            } else {
+                showStatus(status, `❌ ${data.error}`, 'error');
+            }
+        } catch (e) {
+            showStatus(status, '❌ Error saving token', 'error');
+        }
+    }
+
+    // ==========================================
+    // DELETE TOKEN
+    // ==========================================
+    async function deleteToken(name) {
+        if (!confirm(`Delete account "${name}"?`)) return;
+        try {
+            await api('DELETE', `/api/tokens/${name}`);
+            loadTokens();
+        } catch (e) { console.error(e); }
+    }
+
+    // ==========================================
+    // CONFIG
+    // ==========================================
+    async function loadConfig() {
+        try {
+            const data = await api('GET', '/api/config');
+            if (data.guildId) document.getElementById('guildId').value = data.guildId;
+            if (data.channelId) document.getElementById('channelId').value = data.channelId;
+        } catch (e) {}
+    }
+
+    async function saveConfig() {
+        const guildId = document.getElementById('guildId').value.trim();
+        const channelId = document.getElementById('channelId').value.trim();
+        const status = document.getElementById('configStatus');
+
+        if (!guildId || !channelId) {
+            showStatus(status, '❌ Please enter both Guild ID and Channel ID', 'error');
+            return;
+        }
+
+        try {
+            const data = await api('POST', '/api/config', { guildId, channelId });
+            showStatus(status, `✅ ${data.message}`, 'success');
+            setTimeout(() => hideStatus(status), 3000);
+        } catch (e) {
+            showStatus(status, '❌ Error saving configuration', 'error');
+        }
+    }
+
+    // ==========================================
+    // SELFBOT CONTROLS
+    // ==========================================
+    async function startSelfbot() {
+        const status = document.getElementById('startStatus');
+        const consoleStatus = document.getElementById('consoleStatus');
+        showStatus(status, '⏳ Generating selfbot...', 'info');
+        consoleStatus.textContent = '● Starting...';
+        consoleStatus.style.color = 'var(--orange)';
+
+        try {
+            const data = await api('POST', '/api/start');
+            if (data.success) {
+                showStatus(status, `✅ ${data.message}`, 'success');
+                consoleStatus.textContent = '● Online';
+                consoleStatus.style.color = 'var(--green)';
+            } else {
+                showStatus(status, `❌ ${data.error}`, 'error');
+                consoleStatus.textContent = '● Error';
+                consoleStatus.style.color = 'var(--red)';
+            }
+        } catch (e) {
+            showStatus(status, `❌ Error: ${e.message}`, 'error');
+            consoleStatus.textContent = '● Error';
+            consoleStatus.style.color = 'var(--red)';
+        }
+    }
+
+    async function stopSelfbot() {
+        const status = document.getElementById('startStatus');
+        const consoleStatus = document.getElementById('consoleStatus');
+        showStatus(status, '⏳ Stopping...', 'info');
+        consoleStatus.textContent = '● Stopping...';
+        consoleStatus.style.color = 'var(--orange)';
+
+        try {
+            const data = await api('POST', '/api/stop');
+            showStatus(status, `✅ ${data.message}`, 'success');
+            consoleStatus.textContent = '● Idle';
+            consoleStatus.style.color = 'var(--text-secondary)';
+            setTimeout(() => hideStatus(status), 3000);
+        } catch (e) {
+            showStatus(status, `❌ Error: ${e.message}`, 'error');
+        }
+    }
+
+    async function refreshLogs() {
+        const container = document.getElementById('logContainer');
+        const now = new Date().toLocaleTimeString();
+        container.innerHTML = `
+            <div class="log-line"><span class="time">[${now}]</span><span class="msg">✅ Selfbot is running</span></div>
+            <div class="log-line"><span class="time">[${now}]</span><span class="msg">📨 DM command received</span></div>
+            <div class="log-line"><span class="time">[${now}]</span><span class="msg">🎤 Connected to AFK voice channel</span></div>
+        `;
+    }
+
+    // ==========================================
+    // INIT
+    // ==========================================
+    loadConfig();
+    loadTokens();
+    updateStats();
+    refreshLogs();
+    setInterval(() => { updateStats(); loadTokens(); }, 30000);
+</script>
+
+</body>
+</html>
